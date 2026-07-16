@@ -2,11 +2,14 @@ import os
 import re
 import asyncio
 import shutil
+import urllib.request
 from pathlib import Path
 import yt_dlp
 from config import DOWNLOAD_DIR, MAX_FILE_SIZE_MB
 
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
 
 def cleanup_temp_files():
     for f in os.listdir(DOWNLOAD_DIR):
@@ -43,12 +46,15 @@ def get_ydl_opts(format_type: str = "video") -> dict:
         base["format"] = "best[ext=mp4]/best"
         base["merge_output_format"] = "mp4"
     elif format_type == "audio":
-        base["format"] = "bestaudio/best"
-        base["postprocessors"] = [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }]
+        if FFMPEG_AVAILABLE:
+            base["format"] = "bestaudio/best"
+            base["postprocessors"] = [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
+        else:
+            base["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio"
 
     return base
 
@@ -122,6 +128,51 @@ async def download_audio(url: str) -> str | None:
     except Exception as e:
         print(f"Ошибка скачивания аудио: {e}")
         return None
+
+async def is_tiktok_slideshow(url: str) -> bool:
+    if "tiktok.com" not in url and "vm.tiktok" not in url:
+        return False
+    loop = asyncio.get_event_loop()
+
+    def _check():
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info.get("_type") == "playlist" and bool(info.get("entries"))
+
+    try:
+        return await loop.run_in_executor(None, _check)
+    except Exception:
+        return False
+
+async def download_tiktok_images(url: str) -> list[str]:
+    loop = asyncio.get_event_loop()
+
+    def _dl():
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        if info.get("_type") != "playlist" or not info.get("entries"):
+            return []
+        images = []
+        for entry in info["entries"]:
+            img_url = entry.get("url")
+            if not img_url:
+                continue
+            ext = img_url.rsplit(".", 1)[-1].split("?")[0][:4] or "jpg"
+            filename = f"tiktok_img_{entry.get('id', '0')}.{ext}"
+            filepath = os.path.join(DOWNLOAD_DIR, filename)
+            try:
+                urllib.request.urlretrieve(img_url, filepath)
+                if os.path.exists(filepath):
+                    images.append(filepath)
+            except Exception as e:
+                print(f"Ошибка скачивания изображения: {e}")
+        return images
+
+    try:
+        return await loop.run_in_executor(None, _dl)
+    except Exception as e:
+        print(f"Ошибка загрузки изображений TikTok: {e}")
+        return []
 
 def check_file_size(filepath: str) -> bool:
     size_mb = os.path.getsize(filepath) / (1024 * 1024)

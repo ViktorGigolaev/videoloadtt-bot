@@ -1,0 +1,13 @@
+name: Redeploy on Railway
+
+on:
+  schedule:
+    - cron: "0 0 */19 * *"
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Railway deploy hook
+        run: curl -X POST ${{ secrets.RAILWAY_DEPLOY_HOOK }}

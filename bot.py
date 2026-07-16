@@ -2,7 +2,7 @@ import os
 import logging
 from datetime import timedelta
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, InputFile
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, InputFile, InputMediaPhoto
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -21,6 +21,8 @@ from downloader import (
     check_file_size,
     cleanup,
     cleanup_temp_files,
+    is_tiktok_slideshow,
+    download_tiktok_images,
 )
 from languages import t, LANGUAGES, LANG_LIST
 from data import get_or_create_user, increment_stat, is_premium, get_premium_until, get_daily_remaining, use_daily_download, DAILY_LIMIT, get_user, set_subscription, add_balance, _load, is_banned, ban_user, unban_user, SUBSCRIPTIONS, get_plan_name_ru
@@ -120,9 +122,30 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["platform"] = platform
 
     remaining = get_daily_remaining(user_id)
-    if not is_premium(user_id) and remaining < 2:
+    if not is_premium(user_id) and remaining < 1:
         await status_msg.edit_text(t("daily_limit_reached", lang), parse_mode="HTML")
         return
+
+    if platform == "tiktok":
+        is_slideshow = await is_tiktok_slideshow(url)
+        if is_slideshow:
+            await status_msg.edit_text(f"📸 {t('downloading_video', lang)}")
+            images = await download_tiktok_images(url)
+            if images:
+                media_group = [InputMediaPhoto(open(img, "rb")) for img in images]
+                await context.bot.send_media_group(chat_id=chat_id, media=media_group)
+                for img in images:
+                    cleanup(img)
+                await status_msg.delete()
+                if not is_premium(user_id):
+                    use_daily_download(user_id)
+                buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text="✅ " + t("video_ready", lang),
+                    reply_markup=InlineKeyboardMarkup(buttons),
+                )
+                return
 
     video_ok = await auto_download_video(update, context, chat_id, lang)
     if video_ok and not is_premium(user_id):
@@ -133,10 +156,19 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await status_msg.delete()
 
+    if video_ok and audio_ok:
+        result_text = f"✅ {t('video_ready', lang)}\n✅ {t('audio_ready', lang)}"
+    elif video_ok:
+        result_text = f"✅ {t('video_ready', lang)}"
+    elif audio_ok:
+        result_text = f"✅ {t('audio_ready', lang)}"
+    else:
+        result_text = f"❌ {t('error_occurred', lang)}"
+
     buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
     await context.bot.send_message(
         chat_id=chat_id,
-        text="✅ " + t("video_ready", lang),
+        text=result_text,
         reply_markup=InlineKeyboardMarkup(buttons),
     )
 
@@ -263,7 +295,7 @@ async def download_video_and_send(chat_id: int, lang: str, user_id: int, url: st
     if not check_file_size(filepath):
         cleanup(filepath)
         await status_msg.edit_text(t("video_too_large", lang))
-        return
+        return False
 
     await status_msg.edit_text(t("sending_video", lang))
 
@@ -298,7 +330,7 @@ async def download_audio_and_send(chat_id: int, lang: str, user_id: int, url: st
     if not check_file_size(filepath):
         cleanup(filepath)
         await status_msg.edit_text(t("audio_too_large", lang))
-        return
+        return False
 
     await status_msg.edit_text(t("sending_audio", lang))
 
@@ -698,8 +730,29 @@ def main():
             BotCommand("language", "Сменить язык / Change language"),
             BotCommand("admin", "Админ-панель (только для владельца)"),
         ])
+        if OWNER_ID:
+            try:
+                await application.bot.send_message(
+                    chat_id=OWNER_ID,
+                    text="🟢 <b>Бот запущен</b>\n\nБот работает и готов принимать запросы.",
+                    parse_mode="HTML",
+                )
+            except Exception as e:
+                logger.warning(f"Не удалось отправить уведомление о запуске: {e}")
+
+    async def post_stop(application: Application):
+        if OWNER_ID:
+            try:
+                await application.bot.send_message(
+                    chat_id=OWNER_ID,
+                    text="🔴 <b>Бот остановлен</b>",
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
 
     app.post_init = post_init
+    app.post_stop = post_stop
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("menu", menu_command))
