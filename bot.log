@@ -1,0 +1,25 @@
+2026-07-15 07:56:05,156 - __main__ - INFO - Бот запущен! Нажми Ctrl+C для остановки.
+2026-07-15 07:56:05,434 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getMe "HTTP/1.1 200 OK"
+2026-07-15 07:56:05,544 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/setMyCommands "HTTP/1.1 200 OK"
+2026-07-15 07:56:05,639 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/deleteWebhook "HTTP/1.1 200 OK"
+2026-07-15 07:56:05,640 - telegram.ext.Application - INFO - Application started
+2026-07-15 07:56:16,182 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:56:26,276 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:56:36,376 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:56:46,770 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:56:54,462 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:56:54,463 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
+2026-07-15 07:56:54,463 - telegram.ext.Application - INFO - Application.stop() complete
+2026-07-15 07:57:25,448 - __main__ - INFO - Бот запущен! Нажми Ctrl+C для остановки.
+2026-07-15 07:57:25,723 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getMe "HTTP/1.1 200 OK"
+2026-07-15 07:57:25,838 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/setMyCommands "HTTP/1.1 200 OK"
+2026-07-15 07:57:25,942 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/deleteWebhook "HTTP/1.1 200 OK"
+2026-07-15 07:57:25,943 - telegram.ext.Application - INFO - Application started
+2026-07-15 07:57:34,618 - __main__ - ERROR - Ошибка: httpx.RemoteProtocolError: Server disconnected without sending a response.
+2026-07-15 07:57:35,628 - __main__ - ERROR - Ошибка: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-07-15 07:57:37,141 - __main__ - ERROR - Ошибка: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-07-15 07:57:39,397 - __main__ - ERROR - Ошибка: httpx.ConnectError: [Errno 11001] getaddrinfo failed
+2026-07-15 07:58:23,768 - __main__ - ERROR - Ошибка: httpx.ConnectError: 
+2026-07-15 07:58:30,882 - __main__ - ERROR - Ошибка: httpx.ConnectError: 
+2026-07-15 07:58:38,707 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/getUpdates "HTTP/1.1 200 OK"
+2026-07-15 07:58:38,980 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8975166351:AAFrN-KqsHg_FWghdUbU5vqQfDZEzhJ37Wo/sendMessage "HTTP/1.1 200 OK"

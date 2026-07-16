@@ -1,0 +1,37 @@
+{
+  "905422645": {
+    "name": "витюшка",
+    "registered_at": "2026-07-14T22:31:56.438746",
+    "subscription": "free",
+    "subscription_until": null,
+    "balance": 0,
+    "stats": {
+      "total_downloads": 4,
+      "video_downloads": 2,
+      "audio_downloads": 2
+    },
+    "daily": {
+      "date": "2026-07-14",
+      "count": 4
+    }
+  },
+  "902182195": {
+    "name": "Марк",
+    "registered_at": "2026-07-14T23:57:08.103954",
+    "subscription": "free",
+    "subscription_until": null,
+    "one_time_remaining": 0,
+    "banned": false,
+    "banned_reason": "",
+    "balance": 9999999,
+    "stats": {
+      "total_downloads": 2,
+      "video_downloads": 1,
+      "audio_downloads": 1
+    },
+    "daily": {
+      "date": "2026-07-14",
+      "count": 2
+    }
+  }
+}
