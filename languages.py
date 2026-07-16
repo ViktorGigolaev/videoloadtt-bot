@@ -4,11 +4,13 @@ LANGUAGES = {
         "choose_language": "🌐 Выберите язык:",
         "language_changed": "✅ Язык изменён на Русский",
         "welcome": (
-            "👋 <b>Привет! Я бот для скачивания видео без водяных знаков.</b>\n\n"
+            "👋 <b>Привет, {name}!</b>\n\n"
+            "<b>Я бот для скачивания видео без водяных знаков.</b>\n\n"
             "Просто отправь мне ссылку на видео из:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Я скачаю видео и/или аудио для тебя!"
         ),
         "unknown_link": "❌ Я не узнал эту ссылку.\nПожалуйста, отправь ссылку на видео из TikTok, YouTube, Instagram или Pinterest.",
@@ -61,11 +63,13 @@ LANGUAGES = {
         "choose_language": "🌐 Оберіть мову:",
         "language_changed": "✅ Мову змінено на Українську",
         "welcome": (
-            "👋 <b>Привіт! Я бот для завантаження відео без водяних знаків.</b>\n\n"
+            "👋 <b>Привіт, {name}!</b>\n\n"
+            "<b>Я бот для завантаження відео без водяних знаків.</b>\n\n"
             "Просто надішли мені посилання на відео з:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Я завантажу відео та/або аудіо для тебе!"
         ),
         "unknown_link": "❌ Я не впізнав це посилання.\nБудь ласка, надішли посилання на відео з TikTok, YouTube, Instagram або Pinterest.",
@@ -118,11 +122,12 @@ LANGUAGES = {
         "choose_language": "🌐 Тілді таңдаңыз:",
         "language_changed": "✅ Тіл Қазақшаға ауыстырылды",
         "welcome": (
-            "👋 <b>Сәлем! Мен су таңбасыз бейне жүктейтін ботпын.</b>\n\n"
+            "👋 <b>Сәлем, {name}! Мен су таңбасыз бейне жүктейтін ботпын.</b>\n\n"
             "Маған жай ғана сілтеме жібер:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Мен саған бейне және/немесе аудио жүктеп беремін!"
         ),
         "unknown_link": "❌ Мен бұл сілтемені танымадым.\nTikTok, YouTube немесе Instagram-ға сілтеме жіберіңіз.",
@@ -175,11 +180,12 @@ LANGUAGES = {
         "choose_language": "🌐 Забонро интихоб кунед:",
         "language_changed": "✅ Забон ба Тоҷикӣ иваз карда шуд",
         "welcome": (
-            "👋 <b>Салом! Ман боти боргирии видео бе аломати обӣ ҳастам.</b>\n\n"
+            "👋 <b>Салом, {name}! Ман боти боргирии видео бе аломати обӣ ҳастам.</b>\n\n"
             "Танҳо ба ман истинод фиристед:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Ман барои шумо видео ва/ё аудио бор мекунам!"
         ),
         "unknown_link": "❌ Ман ин истинодро нашинохтам.\nЛутфан истинод ба видео аз TikTok, YouTube ё Instagram фиристед.",
@@ -232,11 +238,12 @@ LANGUAGES = {
         "choose_language": "🌐 Tilni tanlang:",
         "language_changed": "✅ Til O'zbek tiliga o'zgartirildi",
         "welcome": (
-            "👋 <b>Salom! Men suv belgisiz video yuklovchi botman.</b>\n\n"
+            "👋 <b>Salom, {name}! Men suv belgisiz video yuklovchi botman.</b>\n\n"
             "Menga shunchaki havola yubor:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Men senga video va/yoki audio yuklab beraman!"
         ),
         "unknown_link": "❌ Men bu havolani tanimadim.\nIltimos, TikTok, YouTube yoki Instagram-dan havola yuboring.",
@@ -289,11 +296,12 @@ LANGUAGES = {
         "choose_language": "🌐 Тилди тандаңыз:",
         "language_changed": "✅ Тил Кыргызчага өзгөртүлдү",
         "welcome": (
-            "👋 <b>Салам! Мен суу белгисиз видео жүктөөчү ботмун.</b>\n\n"
+            "👋 <b>Салам, {name}! Мен суу белгисиз видео жүктөөчү ботмун.</b>\n\n"
             "Жөн гана мага шилтеме жөнөт:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "Мен сага видео жана/же аудио жүктөп берем!"
         ),
         "unknown_link": "❌ Мен бул шилтеме тааныбадым.\nTikTok, YouTube же Instagram-дан шилтеме жибериңиз.",
@@ -346,11 +354,13 @@ LANGUAGES = {
         "choose_language": "🌐 Choose language:",
         "language_changed": "✅ Language changed to English",
         "welcome": (
-            "👋 <b>Hi! I'm a bot for downloading videos without watermarks.</b>\n\n"
+            "👋 <b>Hi, {name}!</b>\n\n"
+            "<b>I'm a bot for downloading videos without watermarks.</b>\n\n"
             "Just send me a video link from:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "I'll download the video and/or audio for you!"
         ),
         "unknown_link": "❌ I don't recognize this link.\nPlease send a link to a video from TikTok, YouTube or Instagram.",
@@ -403,11 +413,12 @@ LANGUAGES = {
         "choose_language": "🌐 اختر اللغة:",
         "language_changed": "✅ تم تغيير اللغة إلى العربية",
         "welcome": (
-            "👋 <b>مرحباً! أنا بوت تحميل الفيديو بدون علامة مائية.</b>\n\n"
+            "👋 <b>مرحباً {name}! أنا بوت تحميل الفيديو بدون علامة مائية.</b>\n\n"
             "فقط أرسل لي رابط فيديو من:\n"
             "🎵 TikTok\n"
             "▶️ YouTube\n"
-            "📸 Instagram\n\n"
+            "📸 Instagram\n"
+            "📌 Pinterest\n\n"
             "سأقوم بتحميل الفيديو و/أو الصوت لك!"
         ),
         "unknown_link": "❌ لم أتعرف على هذا الرابط.\nالرجاء إرسال رابط فيديو من TikTok أو YouTube أو Instagram.",

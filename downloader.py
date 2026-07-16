@@ -40,10 +40,11 @@ def get_ydl_opts(format_type: str = "video") -> dict:
         "quiet": True,
         "no_warnings": True,
         "extract_flat": False,
+        "extractor_args": {"youtube": {"skip": ["dash", "hls"]}},
     }
 
     if format_type == "video":
-        base["format"] = "best[ext=mp4]/best"
+        base["format"] = "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b"
         base["merge_output_format"] = "mp4"
     elif format_type == "audio":
         if FFMPEG_AVAILABLE:
@@ -112,15 +113,17 @@ async def download_audio(url: str) -> str | None:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
             base = ydl.prepare_filename(info)
-            return Path(base).stem + ".mp3"
+            if FFMPEG_AVAILABLE:
+                return Path(base).stem + ".mp3"
+            return base
 
     try:
-        filename = await loop.run_in_executor(None, _download)
-        filepath = os.path.join(DOWNLOAD_DIR, filename)
+        filepath = await loop.run_in_executor(None, _download)
 
         if not os.path.exists(filepath):
+            stem = Path(filepath).stem
             for f in os.listdir(DOWNLOAD_DIR):
-                if f.startswith(Path(filename).stem):
+                if f.startswith(stem):
                     filepath = os.path.join(DOWNLOAD_DIR, f)
                     break
 
@@ -173,6 +176,26 @@ async def download_tiktok_images(url: str) -> list[str]:
     except Exception as e:
         print(f"Ошибка загрузки изображений TikTok: {e}")
         return []
+
+async def download_pinterest_image(url: str) -> str | None:
+    loop = asyncio.get_event_loop()
+
+    def _dl():
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        img_url = info.get("url", "")
+        if not img_url or not any(img_url.lower().endswith(e) for e in [".jpg", ".jpeg", ".png", ".webp", ".gif"]):
+            return None
+        ext = img_url.rsplit(".", 1)[-1].split("?")[0][:4] or "jpg"
+        filepath = os.path.join(DOWNLOAD_DIR, f"pinterest_img_{info.get('id', '0')}.{ext}")
+        urllib.request.urlretrieve(img_url, filepath)
+        return filepath if os.path.exists(filepath) else None
+
+    try:
+        return await loop.run_in_executor(None, _dl)
+    except Exception as e:
+        print(f"Ошибка загрузки Pinterest: {e}")
+        return None
 
 def check_file_size(filepath: str) -> bool:
     size_mb = os.path.getsize(filepath) / (1024 * 1024)

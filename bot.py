@@ -23,6 +23,7 @@ from downloader import (
     cleanup_temp_files,
     is_tiktok_slideshow,
     download_tiktok_images,
+    download_pinterest_image,
 )
 from languages import t, LANGUAGES, LANG_LIST
 from data import get_or_create_user, increment_stat, is_premium, get_premium_until, get_daily_remaining, use_daily_download, DAILY_LIMIT, get_user, set_subscription, add_balance, _load, is_banned, ban_user, unban_user, SUBSCRIPTIONS, get_plan_name_ru
@@ -80,6 +81,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    lang = get_lang(context)
+    await update.message.reply_text(
+        t("welcome", lang).format(name=user.first_name),
+        parse_mode="HTML",
+    )
     await show_main_menu(update, context)
     logger.info(f"Пользователь {user.id} ({user.first_name}) открыл меню, язык: {get_lang(context)}")
 
@@ -146,6 +152,24 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reply_markup=InlineKeyboardMarkup(buttons),
                 )
                 return
+
+    if platform == "pinterest":
+        pinterest_img = await download_pinterest_image(url)
+        if pinterest_img:
+            await status_msg.edit_text(f"📤 {t('sending_video', lang)}")
+            with open(pinterest_img, "rb") as f:
+                await context.bot.send_photo(chat_id=chat_id, photo=InputFile(f))
+            cleanup(pinterest_img)
+            await status_msg.delete()
+            if not is_premium(user_id):
+                use_daily_download(user_id)
+            buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text="✅ " + t("video_ready", lang),
+                reply_markup=InlineKeyboardMarkup(buttons),
+            )
+            return
 
     video_ok = await auto_download_video(update, context, chat_id, lang)
     if video_ok and not is_premium(user_id):
