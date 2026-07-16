@@ -16,3 +16,5 @@ MAX_FILE_SIZE_MB = 50
 ALLOWED_USERS = []
 
 COOKIES_FILE = "cookies.txt"
+
+BOT_USERNAME = os.getenv("BOT_USERNAME", "videoloadtt_bot")

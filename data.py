@@ -164,7 +164,7 @@ def get_daily_remaining(user_id: int) -> int:
         if sub in ("week", "month", "forever", "premium"):
             until = user.get("subscription_until")
             if sub == "forever" or (until and datetime.fromisoformat(until) > datetime.now()):
-                return DAILY_LIMIT
+                return 9999
 
         if sub == "one_time":
             remaining = user.get("one_time_remaining", 0)
@@ -189,7 +189,7 @@ def use_daily_download(user_id: int) -> int:
         if sub in ("week", "month", "forever", "premium"):
             until = user.get("subscription_until")
             if sub == "forever" or (until and datetime.fromisoformat(until) > datetime.now()):
-                return DAILY_LIMIT
+                return 9999
 
         if sub == "one_time":
             rem = user.get("one_time_remaining", 0)

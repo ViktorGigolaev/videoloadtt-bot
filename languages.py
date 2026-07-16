@@ -27,8 +27,8 @@ LANGUAGES = {
         "downloading_audio": "📥 Скачиваю аудио...",
         "sending_video": "📤 Отправляю видео...",
         "sending_audio": "📤 Отправляю аудио...",
-        "video_ready": "✅ Видео готово!",
-        "audio_ready": "✅ Аудио готово!",
+        "video_ready": "📹 Видео скачано!",
+        "audio_ready": "🎵 Аудио скачано!",
         "video_failed": "❌ Не удалось скачать видео.",
         "audio_failed": "❌ Не удалось извлечь аудио.",
         "video_too_large": "❌ Видео слишком большое (>50MB). Telegram не даёт отправлять такие файлы.",
@@ -55,8 +55,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Это премиум-функция</b>\n\nДоступно только для подписчиков Premium. Оформи подписку, чтобы получить безлимитные скачивания, приоритетную обработку и другие преимущества!",
         "daily_remaining": "Осталось скачиваний: {n}/5",
         "daily_limit_reached": "❌ Дневной лимит исчерпан.\n\nБесплатно можно скачать 5 файлов в день. Лимит обновляется каждый день в 00:00 UTC.\n\n⭐ <b>Купи Premium</b> для безлимитных скачиваний!",
-        "caption_video": "🎬 Видео загружено через @videoloadtt_bot",
-        "caption_audio": "🎵 Аудио загружено через @videoloadtt_bot",
+        "caption_video": "🎬 Видео загружено через @{bot_username}",
+        "caption_audio": "🎵 Аудио загружено через @{bot_username}",
+        "success_footer": "✅ Успешно!\nСпасибо, что скачали через @{bot_username}",
     },
     "uk": {
         "name": "Українська",
@@ -114,8 +115,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Це преміум-функція</b>\n\nДоступно тільки для підписників Premium. Оформи підписку, щоб отримати безлімітні завантаження, пріоритетну обробку та інші переваги!",
         "daily_remaining": "Залишилось завантажень: {n}/5",
         "daily_limit_reached": "❌ Денний ліміт вичерпано.\n\nБезкоштовно можна завантажити 5 файлів на день. Ліміт оновлюється щодня о 00:00 UTC.\n\n⭐ <b>Купи Premium</b> для безлімітних завантажень!",
-        "caption_video": "🎬 Відео завантажено через @videoloadtt_bot",
-        "caption_audio": "🎵 Аудіо завантажено через @videoloadtt_bot",
+        "caption_video": "🎬 Відео завантажено через @{bot_username}",
+        "caption_audio": "🎵 Аудіо завантажено через @{bot_username}",
+        "success_footer": "✅ Успішно!\nДякуємо, що завантажили через @{bot_username}",
     },
     "kz": {
         "name": "Қазақша",
@@ -172,8 +174,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Бұл премиум-функция</b>\n\nТек Premium жазылымшыларына қолжетімді. Шексіз жүктеулер, басым өңдеу және басқа артықшылықтар алу үшін жазылымды рәсімдеңіз!",
         "daily_remaining": "Қалған жүктеулер: {n}/5",
         "daily_limit_reached": "❌ Күндік лимит бітті.\n\nКүніне 5 файлды тегін жүктеуге болады. Лимит күн сайын сағат 00:00 UTC-де жаңартылады.\n\n⭐ <b>Premium сатып алыңыз</b> шексіз жүктеу үшін!",
-        "caption_video": "🎬 Бейне @videoloadtt_bot арқылы жүктелді",
-        "caption_audio": "🎵 Аудио @videoloadtt_bot арқылы жүктелді",
+        "caption_video": "🎬 Бейне @{bot_username} арқылы жүктелді",
+        "caption_audio": "🎵 Аудио @{bot_username} арқылы жүктелді",
+        "success_footer": "✅ Сәтті!\n@{bot_username} арқылы жүктегеніңізге рахмет",
     },
     "tj": {
         "name": "Тоҷикӣ",
@@ -230,8 +233,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Ин функсияи премиум аст</b>\n\nТанҳо барои обуначиёни Premium дастрас аст. Барои гирифтани боргирии номаҳдуд, коркарди афзалиятнок ва дигар бартариҳо обуна шавед!",
         "daily_remaining": "Боргирии боқимонда: {n}/5",
         "daily_limit_reached": "❌ Лимити рӯзона тамом шуд.\n\nРӯзона 5 файлро ройгон бор кардан мумкин аст. Лимит ҳар рӯз соати 00:00 UTC нав мешавад.\n\n⭐ <b>Premium харед</b> барои боргирии номаҳдуд!",
-        "caption_video": "🎬 Видео тавассути @videoloadtt_bot бор шуд",
-        "caption_audio": "🎵 Аудио тавассути @videoloadtt_bot бор шуд",
+        "caption_video": "🎬 Видео тавассути @{bot_username} бор шуд",
+        "caption_audio": "🎵 Аудио тавассути @{bot_username} бор шуд",
+        "success_footer": "✅ Муваффақ!\nТашаккур барои боргирӣ тавассути @{bot_username}",
     },
     "uz": {
         "name": "O'zbek",
@@ -288,8 +292,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Bu premium funksiya</b>\n\nFaqat Premium obunachilari uchun mavjud. Cheksiz yuklash, ustuvor ishlov berish va boshqa imtiyozlarni olish uchun obuna bo'ling!",
         "daily_remaining": "Qolgan yuklamalar: {n}/5",
         "daily_limit_reached": "❌ Kundalik limit tugadi.\n\nKuniga 5 ta faylni bepul yuklash mumkin. Limit har kuni soat 00:00 UTC da yangilanadi.\n\n⭐ <b>Premium sotib oling</b> cheksiz yuklash uchun!",
-        "caption_video": "🎬 Video @videoloadtt_bot orqali yuklandi",
-        "caption_audio": "🎵 Audio @videoloadtt_bot orqali yuklandi",
+        "caption_video": "🎬 Video @{bot_username} orqali yuklandi",
+        "caption_audio": "🎵 Audio @{bot_username} orqali yuklandi",
+        "success_footer": "✅ Muvaffaqiyatli!\n@{bot_username} orqali yuklaganingiz uchun rahmat",
     },
     "ky": {
         "name": "Кыргызча",
@@ -346,8 +351,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>Бул премиум функция</b>\n\nТек Premium жазылуучуларына жеткиликтүү. Чексиз жүктөө, артыкчылыктуу иштетүү жана башка артыкчылыктарды алуу үчүн жазылыңыз!",
         "daily_remaining": "Калган жүктөөлөр: {n}/5",
         "daily_limit_reached": "❌ Күндүк лимит бүттү.\n\nКүнүнө 5 файлды акысыз жүктөөгө болот. Лимит күн сайын саат 00:00 UTC жаңыланат.\n\n⭐ <b>Premium сатып алыңыз</b> чексиз жүктөө үчүн!",
-        "caption_video": "🎬 Видео @videoloadtt_bot аркылуу жүктөлдү",
-        "caption_audio": "🎵 Аудио @videoloadtt_bot аркылуу жүктөлдү",
+        "caption_video": "🎬 Видео @{bot_username} аркылуу жүктөлдү",
+        "caption_audio": "🎵 Аудио @{bot_username} аркылуу жүктөлдү",
+        "success_footer": "✅ Ийгиликтүү!\n@{bot_username} аркылуу жүктөгөнүңүз үчүн рахмат",
     },
     "en": {
         "name": "English",
@@ -405,8 +411,9 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>This is a premium feature</b>\n\nAvailable only for Premium subscribers. Subscribe to get unlimited downloads, priority processing and more!",
         "daily_remaining": "Remaining downloads: {n}/5",
         "daily_limit_reached": "❌ Daily limit reached.\n\nFree users can download 5 files per day. The limit resets every day at 00:00 UTC.\n\n⭐ <b>Get Premium</b> for unlimited downloads!",
-        "caption_video": "🎬 Video downloaded via @videoloadtt_bot",
-        "caption_audio": "🎵 Audio downloaded via @videoloadtt_bot",
+        "caption_video": "🎬 Video downloaded via @{bot_username}",
+        "caption_audio": "🎵 Audio downloaded via @{bot_username}",
+        "success_footer": "✅ Success!\nThank you for downloading via @{bot_username}",
     },
     "ar": {
         "name": "العربية",
@@ -463,12 +470,17 @@ LANGUAGES = {
         "premium_feature": "⭐ <b>هذه ميزة بريميوم</b>\n\nمتاحة فقط لمشتركي Premium. اشترك الآن للحصول على تحميل غير محدود، معالجة ذات أولوية ومزايا أخرى!",
         "daily_remaining": "التنزيلات المتبقية: {n}/5",
         "daily_limit_reached": "❌ تم استنفاد الحد اليومي.\n\nيمكن للمستخدمين المجانيين تنزيل 5 ملفات يومياً. يتم تجديد الحد يومياً عند الساعة 00:00 UTC.\n\n⭐ <b>اشترك في Premium</b> للتنزيل غير المحدود!",
-        "caption_video": "🎬 تم تحميل الفيديو عبر @videoloadtt_bot",
-        "caption_audio": "🎵 تم تحميل الصوت عبر @videoloadtt_bot",
+        "caption_video": "🎬 تم تحميل الفيديو عبر @{bot_username}",
+        "caption_audio": "🎵 تم تحميل الصوت عبر @{bot_username}",
+        "success_footer": "✅ تم بنجاح!\nشكراً للتحميل عبر @{bot_username}",
     },
 }
 
 LANG_LIST = ["ru", "en", "uk", "kz", "tj", "uz", "ky", "ar"]
 
-def t(key: str, lang: str) -> str:
-    return LANGUAGES.get(lang, LANGUAGES["ru"]).get(key, LANGUAGES["ru"].get(key, key))
+def t(key: str, lang: str, **kwargs) -> str:
+    val = LANGUAGES.get(lang, LANGUAGES["ru"]).get(key, LANGUAGES["ru"].get(key, key))
+    if kwargs:
+        return val.format(**kwargs)
+    return val
+

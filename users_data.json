@@ -2,13 +2,13 @@
   "905422645": {
     "name": "витюшка",
     "registered_at": "2026-07-14T22:31:56.438746",
-    "subscription": "free",
+    "subscription": "forever",
     "subscription_until": null,
     "balance": 0,
     "stats": {
-      "total_downloads": 4,
-      "video_downloads": 2,
-      "audio_downloads": 2
+      "total_downloads": 11,
+      "video_downloads": 6,
+      "audio_downloads": 5
     },
     "daily": {
       "date": "2026-07-14",

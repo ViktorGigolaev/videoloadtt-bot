@@ -11,13 +11,18 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from config import BOT_TOKEN, OWNER_ID
+from config import BOT_TOKEN, OWNER_ID, BOT_USERNAME
 from downloader import (
     detect_platform,
     download_media,
     download_audio_only,
     download_slideshow,
+    download_image_content,
+    download_tiktok_photos,
+    download_pinterest_content,
     get_media_type,
+    is_image_only,
+    is_gif,
     check_file_size,
     cleanup,
     cleanup_temp_files,
@@ -109,7 +114,9 @@ async def send_media_file(chat_id: int, filepath: str, caption: str, context: Co
 
     try:
         with open(filepath, "rb") as f:
-            if mtype == "video":
+            if is_gif(filepath):
+                await context.bot.send_animation(chat_id=chat_id, animation=InputFile(f, filename=fname), caption=caption)
+            elif mtype == "video":
                 await context.bot.send_video(chat_id=chat_id, video=InputFile(f, filename=fname), caption=caption, supports_streaming=True)
             elif mtype == "audio":
                 await context.bot.send_audio(chat_id=chat_id, audio=InputFile(f, filename=fname), caption=caption)
@@ -154,6 +161,43 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info = await extract_info(url)
     is_slideshow = info and info.get("_type") == "playlist" and bool(info.get("entries"))
 
+    if not info and platform == "tiktok":
+        images = await download_tiktok_photos(url)
+        if images:
+            media_group = [InputMediaPhoto(open(img, "rb")) for img in images]
+            await context.bot.send_media_group(chat_id=chat_id, media=media_group)
+            for img in images:
+                cleanup(img)
+            await status_msg.delete()
+            if not is_premium(user_id):
+                use_daily_download(user_id)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"{t('video_ready', lang)}\n{t('success_footer', lang, bot_username=BOT_USERNAME)}",
+            )
+            return
+        await status_msg.edit_text(f"❌ {t('error_occurred', lang)}")
+        return
+
+    if not info and platform == "pinterest":
+        img_path = await download_pinterest_content(url)
+        if img_path and check_file_size(img_path):
+            caption = t("caption_video", lang, bot_username=BOT_USERNAME)
+            ok = await send_media_file(chat_id, img_path, caption, context)
+            cleanup(img_path)
+            if ok:
+                increment_stat(user_id, "video_downloads")
+                if not is_premium(user_id):
+                    use_daily_download(user_id)
+                await status_msg.delete()
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"{t('video_ready', lang)}\n{t('success_footer', lang, bot_username=BOT_USERNAME)}",
+                )
+                return
+        await status_msg.edit_text(f"❌ {t('error_occurred', lang)}")
+        return
+
     if is_slideshow:
         images = await download_slideshow(url)
         if images:
@@ -164,13 +208,28 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await status_msg.delete()
             if not is_premium(user_id):
                 use_daily_download(user_id)
-            buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="✅ " + t("video_ready", lang),
-                reply_markup=InlineKeyboardMarkup(buttons),
+                text=f"{t('video_ready', lang)}\n{t('success_footer', lang, bot_username=BOT_USERNAME)}",
             )
             return
+
+    is_image = is_image_only(info)
+    if is_image:
+        img_path = await download_image_content(url)
+        if img_path and check_file_size(img_path):
+            caption = t("caption_video", lang, bot_username=BOT_USERNAME)
+            ok = await send_media_file(chat_id, img_path, caption, context)
+            cleanup(img_path)
+            if ok:
+                increment_stat(user_id, "video_downloads")
+                deducted = use_daily_download(user_id) if not is_premium(user_id) else None
+                await status_msg.delete()
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"{t('video_ready', lang)}\n{t('success_footer', lang, bot_username=BOT_USERNAME)}",
+                )
+                return
 
     video_ok = False
     audio_ok = False
@@ -182,13 +241,12 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             filepath = None
         else:
             await status_msg.edit_text(f"📤 {t('sending_video', lang)}")
-            ok = await send_media_file(chat_id, filepath, t("caption_video", lang), context)
+            caption = t("caption_video", lang, bot_username=BOT_USERNAME)
+            ok = await send_media_file(chat_id, filepath, caption, context)
             cleanup(filepath)
             if ok:
                 video_ok = True
                 increment_stat(user_id, "video_downloads")
-                if not is_premium(user_id):
-                    use_daily_download(user_id)
 
     audio_filepath = await download_audio_only(url)
     if audio_filepath:
@@ -196,30 +254,32 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             cleanup(audio_filepath)
             audio_filepath = None
         else:
-            ok = await send_media_file(chat_id, audio_filepath, t("caption_audio", lang), context)
+            caption = t("caption_audio", lang, bot_username=BOT_USERNAME)
+            ok = await send_media_file(chat_id, audio_filepath, caption, context)
             cleanup(audio_filepath)
             if ok:
                 audio_ok = True
                 increment_stat(user_id, "audio_downloads")
-                if not is_premium(user_id):
-                    use_daily_download(user_id)
+
+    if (video_ok or audio_ok) and not is_premium(user_id):
+        use_daily_download(user_id)
 
     await status_msg.delete()
 
     if video_ok and audio_ok:
-        result_text = f"✅ {t('video_ready', lang)}\n✅ {t('audio_ready', lang)}"
+        result_text = f"{t('video_ready', lang)}\n{t('audio_ready', lang)}"
     elif video_ok:
-        result_text = f"✅ {t('video_ready', lang)}"
+        result_text = t('video_ready', lang)
     elif audio_ok:
-        result_text = f"✅ {t('audio_ready', lang)}"
+        result_text = t('audio_ready', lang)
     else:
         result_text = f"❌ {t('error_occurred', lang)}"
+        await context.bot.send_message(chat_id=chat_id, text=result_text)
+        return
 
-    buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
     await context.bot.send_message(
         chat_id=chat_id,
-        text=result_text,
-        reply_markup=InlineKeyboardMarkup(buttons),
+        text=f"{result_text}\n{t('success_footer', lang, bot_username=BOT_USERNAME)}",
     )
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -290,7 +350,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         filepath = await download_media(url)
         if filepath and check_file_size(filepath):
-            await send_media_file(update.effective_chat.id, filepath, t("caption_video", lang), context)
+            caption = t("caption_video", lang, bot_username=BOT_USERNAME)
+            await send_media_file(update.effective_chat.id, filepath, caption, context)
             cleanup(filepath)
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text=t("error_occurred", lang))

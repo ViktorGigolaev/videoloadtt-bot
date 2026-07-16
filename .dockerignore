@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.env
+downloads/
+*.mp3
+*.mp4
+*.webm
+*.mkv
+*.part
+cookies.txt
+.git/
+.gitignore
+bot.log
+users_data.json
+README.md
