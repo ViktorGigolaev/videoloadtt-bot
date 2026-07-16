@@ -10,6 +10,15 @@ from config import DOWNLOAD_DIR, MAX_FILE_SIZE_MB
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
+YTDL_OPTS = {
+    "outtmpl": os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s"),
+    "quiet": True,
+    "no_warnings": True,
+    "extract_flat": False,
+    "retries": 10,
+    "fragment_retries": 10,
+    "extractor_args": {"youtube": {"skip": ["dash", "hls"]}},
+}
 
 def cleanup_temp_files():
     for f in os.listdir(DOWNLOAD_DIR):
@@ -17,11 +26,6 @@ def cleanup_temp_files():
             os.remove(os.path.join(DOWNLOAD_DIR, f))
         except Exception:
             pass
-
-def sanitize(text: str) -> str:
-    text = re.sub(r'[<>:"/\\|?*]', "", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text[:100] or "video"
 
 def detect_platform(url: str) -> str:
     if re.search(r"(tiktok\.com|vm\.tiktok\.)", url, re.IGNORECASE):
@@ -34,168 +38,102 @@ def detect_platform(url: str) -> str:
         return "pinterest"
     return "unknown"
 
-def get_ydl_opts(format_type: str = "video") -> dict:
-    base = {
-        "outtmpl": os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s"),
-        "quiet": True,
-        "no_warnings": True,
-        "extract_flat": False,
-        "extractor_args": {"youtube": {"skip": ["dash", "hls"]}},
-    }
+def get_media_type(filepath: str) -> str:
+    ext = Path(filepath).suffix.lower()
+    if ext in (".mp4", ".webm", ".mkv", ".avi", ".mov"):
+        return "video"
+    if ext in (".mp3", ".m4a", ".ogg", ".wav", ".flac", ".aac", ".opus"):
+        return "audio"
+    if ext in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"):
+        return "photo"
+    return "document"
 
-    if format_type == "video":
-        base["format"] = "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b"
-        base["merge_output_format"] = "mp4"
-    elif format_type == "audio":
-        if FFMPEG_AVAILABLE:
-            base["format"] = "bestaudio/best"
-            base["postprocessors"] = [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }]
-        else:
-            base["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio"
+def _find_file(base_path: str) -> str | None:
+    fp = base_path
+    if os.path.exists(fp):
+        return fp
+    stem = Path(fp).stem
+    for f in os.listdir(DOWNLOAD_DIR):
+        if f.startswith(stem):
+            return os.path.join(DOWNLOAD_DIR, f)
+    return None
 
-    return base
-
-async def get_video_info(url: str) -> dict:
+async def extract_info(url: str) -> dict | None:
     loop = asyncio.get_event_loop()
-
     def _fetch():
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "extract_flat": False}) as ydl:
             return ydl.extract_info(url, download=False)
+    try:
+        return await loop.run_in_executor(None, _fetch)
+    except Exception as e:
+        print(f"Ошибка получения информации: {e}")
+        return None
 
-    info = await loop.run_in_executor(None, _fetch)
-
-    return {
-        "title": info.get("title", "Без названия"),
-        "duration": info.get("duration", 0),
-        "platform": detect_platform(url),
-        "url": url,
-    }
-
-async def download_video(url: str) -> str | None:
+async def download_media(url: str) -> str | None:
     loop = asyncio.get_event_loop()
-    opts = get_ydl_opts("video")
+    opts = {**YTDL_OPTS, "format": "bv*+ba/b", "merge_output_format": "mp4"}
 
-    def _download():
+    def _dl():
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
             return ydl.prepare_filename(info)
 
     try:
-        filepath = await loop.run_in_executor(None, _download)
-
-        ext = Path(filepath).suffix
-        if ext not in (".mp4", ".webm", ".mkv"):
-            base = Path(filepath).stem
-            mp4_path = os.path.join(DOWNLOAD_DIR, f"{base}.mp4")
-            if os.path.exists(mp4_path):
-                filepath = mp4_path
-
-        if not os.path.exists(filepath):
-            for f in os.listdir(DOWNLOAD_DIR):
-                if f.startswith(Path(filepath).stem):
-                    filepath = os.path.join(DOWNLOAD_DIR, f)
-                    break
-
-        return filepath if os.path.exists(filepath) else None
+        fp = await loop.run_in_executor(None, _dl)
+        return _find_file(fp)
     except Exception as e:
-        print(f"Ошибка скачивания видео: {e}")
+        print(f"Ошибка скачивания: {e}")
         return None
 
-async def download_audio(url: str) -> str | None:
+async def download_audio_only(url: str) -> str | None:
     loop = asyncio.get_event_loop()
-    opts = get_ydl_opts("audio")
+    opts = {**YTDL_OPTS}
+    if FFMPEG_AVAILABLE:
+        opts["format"] = "bestaudio/best"
+        opts["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}]
+    else:
+        opts["format"] = "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio"
 
-    def _download():
+    def _dl():
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
             base = ydl.prepare_filename(info)
-            if FFMPEG_AVAILABLE:
-                return Path(base).stem + ".mp3"
-            return base
+            return Path(base).stem + ".mp3" if FFMPEG_AVAILABLE else base
 
     try:
-        filepath = await loop.run_in_executor(None, _download)
-
-        if not os.path.exists(filepath):
-            stem = Path(filepath).stem
-            for f in os.listdir(DOWNLOAD_DIR):
-                if f.startswith(stem):
-                    filepath = os.path.join(DOWNLOAD_DIR, f)
-                    break
-
-        return filepath if os.path.exists(filepath) else None
+        fp = await loop.run_in_executor(None, _dl)
+        return _find_file(fp)
     except Exception as e:
         print(f"Ошибка скачивания аудио: {e}")
         return None
 
-async def is_tiktok_slideshow(url: str) -> bool:
-    if "tiktok.com" not in url and "vm.tiktok" not in url:
-        return False
+async def download_slideshow(url: str) -> list[str]:
     loop = asyncio.get_event_loop()
-
-    def _check():
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info.get("_type") == "playlist" and bool(info.get("entries"))
-
-    try:
-        return await loop.run_in_executor(None, _check)
-    except Exception:
-        return False
-
-async def download_tiktok_images(url: str) -> list[str]:
-    loop = asyncio.get_event_loop()
-
     def _dl():
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "extract_flat": False}) as ydl:
             info = ydl.extract_info(url, download=False)
         if info.get("_type") != "playlist" or not info.get("entries"):
             return []
         images = []
         for entry in info["entries"]:
-            img_url = entry.get("url")
+            img_url = entry.get("url") or entry.get("thumbnail_url") or ""
             if not img_url:
                 continue
             ext = img_url.rsplit(".", 1)[-1].split("?")[0][:4] or "jpg"
-            filename = f"tiktok_img_{entry.get('id', '0')}.{ext}"
+            filename = f"slide_{entry.get('id', 'img')}.{ext}"
             filepath = os.path.join(DOWNLOAD_DIR, filename)
             try:
                 urllib.request.urlretrieve(img_url, filepath)
                 if os.path.exists(filepath):
                     images.append(filepath)
             except Exception as e:
-                print(f"Ошибка скачивания изображения: {e}")
+                print(f"Ошибка скачивания слайда: {e}")
         return images
-
     try:
         return await loop.run_in_executor(None, _dl)
     except Exception as e:
-        print(f"Ошибка загрузки изображений TikTok: {e}")
+        print(f"Ошибка загрузки слайд-шоу: {e}")
         return []
-
-async def download_pinterest_image(url: str) -> str | None:
-    loop = asyncio.get_event_loop()
-
-    def _dl():
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
-            info = ydl.extract_info(url, download=False)
-        img_url = info.get("url", "")
-        if not img_url or not any(img_url.lower().endswith(e) for e in [".jpg", ".jpeg", ".png", ".webp", ".gif"]):
-            return None
-        ext = img_url.rsplit(".", 1)[-1].split("?")[0][:4] or "jpg"
-        filepath = os.path.join(DOWNLOAD_DIR, f"pinterest_img_{info.get('id', '0')}.{ext}")
-        urllib.request.urlretrieve(img_url, filepath)
-        return filepath if os.path.exists(filepath) else None
-
-    try:
-        return await loop.run_in_executor(None, _dl)
-    except Exception as e:
-        print(f"Ошибка загрузки Pinterest: {e}")
-        return None
 
 def check_file_size(filepath: str) -> bool:
     size_mb = os.path.getsize(filepath) / (1024 * 1024)

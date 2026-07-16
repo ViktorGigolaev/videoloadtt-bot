@@ -1,6 +1,5 @@
 import os
 import logging
-from datetime import timedelta
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, InputFile, InputMediaPhoto
 from telegram.ext import (
@@ -15,15 +14,14 @@ from telegram.ext import (
 from config import BOT_TOKEN, OWNER_ID
 from downloader import (
     detect_platform,
-    get_video_info,
-    download_video,
-    download_audio,
+    download_media,
+    download_audio_only,
+    download_slideshow,
+    get_media_type,
     check_file_size,
     cleanup,
     cleanup_temp_files,
-    is_tiktok_slideshow,
-    download_tiktok_images,
-    download_pinterest_image,
+    extract_info,
 )
 from languages import t, LANGUAGES, LANG_LIST
 from data import get_or_create_user, increment_stat, is_premium, get_premium_until, get_daily_remaining, use_daily_download, DAILY_LIMIT, get_user, set_subscription, add_balance, _load, is_banned, ban_user, unban_user, SUBSCRIPTIONS, get_plan_name_ru
@@ -105,6 +103,25 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=lang_buttons(),
     )
 
+async def send_media_file(chat_id: int, filepath: str, caption: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    fname = os.path.basename(filepath)
+    mtype = get_media_type(filepath)
+
+    try:
+        with open(filepath, "rb") as f:
+            if mtype == "video":
+                await context.bot.send_video(chat_id=chat_id, video=InputFile(f, filename=fname), caption=caption, supports_streaming=True)
+            elif mtype == "audio":
+                await context.bot.send_audio(chat_id=chat_id, audio=InputFile(f, filename=fname), caption=caption)
+            elif mtype == "photo":
+                await context.bot.send_photo(chat_id=chat_id, photo=InputFile(f, filename=fname), caption=caption)
+            else:
+                await context.bot.send_document(chat_id=chat_id, document=InputFile(f, filename=fname), caption=caption)
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка отправки: {e}")
+        return False
+
 async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(context)
     user_id = update.effective_user.id
@@ -132,34 +149,18 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await status_msg.edit_text(t("daily_limit_reached", lang), parse_mode="HTML")
         return
 
-    if platform == "tiktok":
-        is_slideshow = await is_tiktok_slideshow(url)
-        if is_slideshow:
-            await status_msg.edit_text(f"📸 {t('downloading_video', lang)}")
-            images = await download_tiktok_images(url)
-            if images:
-                media_group = [InputMediaPhoto(open(img, "rb")) for img in images]
-                await context.bot.send_media_group(chat_id=chat_id, media=media_group)
-                for img in images:
-                    cleanup(img)
-                await status_msg.delete()
-                if not is_premium(user_id):
-                    use_daily_download(user_id)
-                buttons = [[InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")]]
-                await context.bot.send_message(
-                    chat_id=chat_id,
-                    text="✅ " + t("video_ready", lang),
-                    reply_markup=InlineKeyboardMarkup(buttons),
-                )
-                return
+    await status_msg.edit_text(f"📥 {t('downloading_video', lang)}")
 
-    if platform == "pinterest":
-        pinterest_img = await download_pinterest_image(url)
-        if pinterest_img:
-            await status_msg.edit_text(f"📤 {t('sending_video', lang)}")
-            with open(pinterest_img, "rb") as f:
-                await context.bot.send_photo(chat_id=chat_id, photo=InputFile(f))
-            cleanup(pinterest_img)
+    info = await extract_info(url)
+    is_slideshow = info and info.get("_type") == "playlist" and bool(info.get("entries"))
+
+    if is_slideshow:
+        images = await download_slideshow(url)
+        if images:
+            media_group = [InputMediaPhoto(open(img, "rb")) for img in images]
+            await context.bot.send_media_group(chat_id=chat_id, media=media_group)
+            for img in images:
+                cleanup(img)
             await status_msg.delete()
             if not is_premium(user_id):
                 use_daily_download(user_id)
@@ -171,12 +172,37 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-    video_ok = await auto_download_video(update, context, chat_id, lang)
-    if video_ok and not is_premium(user_id):
-        use_daily_download(user_id)
-    audio_ok = await auto_download_audio(update, context, chat_id, lang)
-    if audio_ok and not is_premium(user_id):
-        use_daily_download(user_id)
+    video_ok = False
+    audio_ok = False
+
+    filepath = await download_media(url)
+    if filepath:
+        if not check_file_size(filepath):
+            cleanup(filepath)
+            filepath = None
+        else:
+            await status_msg.edit_text(f"📤 {t('sending_video', lang)}")
+            ok = await send_media_file(chat_id, filepath, t("caption_video", lang), context)
+            cleanup(filepath)
+            if ok:
+                video_ok = True
+                increment_stat(user_id, "video_downloads")
+                if not is_premium(user_id):
+                    use_daily_download(user_id)
+
+    audio_filepath = await download_audio_only(url)
+    if audio_filepath:
+        if not check_file_size(audio_filepath):
+            cleanup(audio_filepath)
+            audio_filepath = None
+        else:
+            ok = await send_media_file(chat_id, audio_filepath, t("caption_audio", lang), context)
+            cleanup(audio_filepath)
+            if ok:
+                audio_ok = True
+                increment_stat(user_id, "audio_downloads")
+                if not is_premium(user_id):
+                    use_daily_download(user_id)
 
     await status_msg.delete()
 
@@ -262,13 +288,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(t("starting_download", lang))
 
     try:
-        if action == "download_video":
-            await download_and_send_video(update, context, query)
-        elif action == "download_audio":
-            await download_and_send_audio(update, context, query)
-        elif action == "download_both":
-            await download_and_send_video(update, context, query)
-            await download_and_send_audio(update, context, query)
+        filepath = await download_media(url)
+        if filepath and check_file_size(filepath):
+            await send_media_file(update.effective_chat.id, filepath, t("caption_video", lang), context)
+            cleanup(filepath)
+        else:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=t("error_occurred", lang))
     except Exception as e:
         logger.error(f"Ошибка: {e}")
         await context.bot.send_message(
@@ -305,117 +330,6 @@ async def show_profile(update: Update, context: ContextTypes.DEFAULT_TYPE, query
         [InlineKeyboardButton(t("back_btn", lang), callback_data="menu_back")],
     ]
     await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons))
-
-async def download_video_and_send(chat_id: int, lang: str, user_id: int, url: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    status_msg = await context.bot.send_message(
-        chat_id=chat_id, text=t("downloading_video", lang),
-    )
-    filepath = await download_video(url)
-
-    if not filepath:
-        await status_msg.edit_text(t("video_failed", lang))
-        return False
-
-    if not check_file_size(filepath):
-        cleanup(filepath)
-        await status_msg.edit_text(t("video_too_large", lang))
-        return False
-
-    await status_msg.edit_text(t("sending_video", lang))
-
-    try:
-        fname = os.path.basename(filepath)
-        with open(filepath, "rb") as f:
-            await context.bot.send_video(
-                chat_id=chat_id, video=InputFile(f, filename=fname),
-                caption=t("caption_video", lang),
-                supports_streaming=True,
-            )
-        increment_stat(user_id, "video_downloads")
-        ok = True
-    except Exception as e:
-        logger.error(f"Ошибка отправки видео: {e}")
-        ok = False
-
-    cleanup(filepath)
-    await status_msg.delete()
-    return ok
-
-async def download_audio_and_send(chat_id: int, lang: str, user_id: int, url: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    status_msg = await context.bot.send_message(
-        chat_id=chat_id, text=t("downloading_audio", lang),
-    )
-    filepath = await download_audio(url)
-
-    if not filepath:
-        await status_msg.edit_text(t("audio_failed", lang))
-        return False
-
-    if not check_file_size(filepath):
-        cleanup(filepath)
-        await status_msg.edit_text(t("audio_too_large", lang))
-        return False
-
-    await status_msg.edit_text(t("sending_audio", lang))
-
-    try:
-        fname = os.path.basename(filepath)
-        with open(filepath, "rb") as f:
-            await context.bot.send_audio(
-                chat_id=chat_id, audio=InputFile(f, filename=fname),
-                caption=t("caption_audio", lang),
-            )
-        increment_stat(user_id, "audio_downloads")
-        ok = True
-    except Exception as e:
-        logger.error(f"Ошибка отправки аудио: {e}")
-        ok = False
-
-    cleanup(filepath)
-    await status_msg.delete()
-    return ok
-
-async def auto_download_video(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int, lang: str) -> bool:
-    url = context.user_data["url"]
-    user_id = update.effective_user.id
-    return await download_video_and_send(chat_id, lang, user_id, url, context)
-
-async def auto_download_audio(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int, lang: str) -> bool:
-    url = context.user_data["url"]
-    user_id = update.effective_user.id
-    return await download_audio_and_send(chat_id, lang, user_id, url, context)
-
-async def download_and_send_video(update: Update, context: ContextTypes.DEFAULT_TYPE, query):
-    url = context.user_data["url"]
-    lang = get_lang(context)
-    user_id = update.effective_user.id
-
-    if not is_premium(user_id):
-        remaining = get_daily_remaining(user_id)
-        if remaining < 1:
-            await query.edit_message_text(t("daily_limit_reached", lang), parse_mode="HTML")
-            return
-        use_daily_download(user_id)
-
-    await download_video_and_send(update.effective_chat.id, lang, user_id, url, context)
-
-async def download_and_send_audio(update: Update, context: ContextTypes.DEFAULT_TYPE, query):
-    url = context.user_data["url"]
-    lang = get_lang(context)
-    user_id = update.effective_user.id
-
-    if not is_premium(user_id):
-        remaining = get_daily_remaining(user_id)
-        if remaining < 1:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text=t("daily_limit_reached", lang),
-                parse_mode="HTML",
-            )
-            return
-        use_daily_download(user_id)
-
-    await download_audio_and_send(update.effective_chat.id, lang, user_id, url, context)
 
 async def handle_sub_callback(update: Update, context: ContextTypes.DEFAULT_TYPE, query, action: str):
     lang = get_lang(context)
