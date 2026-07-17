@@ -8,3 +8,5 @@ downloads/
 *.mkv
 *.part
 cookies.txt
+bot.log
+users_data.json
