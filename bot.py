@@ -141,7 +141,7 @@ async def handle_url(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
     platform = detect_platform(url)
     if platform == "unknown":
-        await update.message.reply_text(t("unknown_link", lang))
+        await show_main_menu(update, context)
         return
 
     status_msg = await update.message.reply_text(
